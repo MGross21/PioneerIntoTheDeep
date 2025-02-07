@@ -1,100 +1,68 @@
-package org.firstinspires.ftc.teamcode.Hardware;
+package org.firstinspires.ftc.teamcode.Hardware
 
-import com.qualcomm.robotcore.hardware.DcMotor;
-import com.qualcomm.robotcore.hardware.DcMotorEx;
-import com.qualcomm.robotcore.hardware.IMU;
+import com.qualcomm.robotcore.hardware.DcMotor
+import com.qualcomm.robotcore.hardware.DcMotorEx
+import org.firstinspires.ftc.teamcode.Bot
+import org.firstinspires.ftc.teamcode.Config
+import kotlin.math.abs
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.sign
+import kotlin.math.sin
 
-import org.firstinspires.ftc.teamcode.Bot;
-import org.firstinspires.ftc.teamcode.Config;
+class MecanumBase {
+    private val RF: DcMotorEx = Bot.opMode.hardwareMap.get(DcMotorEx::class.java, Config.motorRF)
+    private val LF: DcMotorEx = Bot.opMode.hardwareMap.get(DcMotorEx::class.java, Config.motorLF).apply { direction = DcMotor.Direction.REVERSE }
+    private val RB: DcMotorEx = Bot.opMode.hardwareMap.get(DcMotorEx::class.java, Config.motorRB)
+    private val LB: DcMotorEx = Bot.opMode.hardwareMap.get(DcMotorEx::class.java, Config.motorLB).apply { direction = DcMotor.Direction.REVERSE }
+    private var northMode = false
 
-public class MecanumBase {
-    private final DcMotorEx LF, LB, RF, RB;
-    private boolean northMode = false;
-    public MecanumBase() {
-        // Set up motors
-        RF = Bot.opMode.hardwareMap.get(DcMotorEx.class, Config.motorRF);
-        LF = Bot.opMode.hardwareMap.get(DcMotorEx.class, Config.motorLF);
-        RB = Bot.opMode.hardwareMap.get(DcMotorEx.class, Config.motorRB);
-        LB = Bot.opMode.hardwareMap.get(DcMotorEx.class, Config.motorLB);
-
-        LF.setDirection(DcMotor.Direction.REVERSE);
-        LB.setDirection(DcMotor.Direction.REVERSE);
-        RF.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        LF.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        RB.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        LB.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        RF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        LF.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        RB.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        LB.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        RF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        LF.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        RB.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        LB.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-    }
-
-    /**
-     * Set the zero power behavior of the motors.
-     * @param behavior ZeroPowerBehavior
-     */
-    public void setZeroPowerBehavior(DcMotor.ZeroPowerBehavior behavior) {
-        RF.setZeroPowerBehavior(behavior);
-        LF.setZeroPowerBehavior(behavior);
-        RB.setZeroPowerBehavior(behavior);
-        LB.setZeroPowerBehavior(behavior);
-    }
-
-    /**
-     *
-     * @param x x vector [-1,1]
-     * @param y y vector [-1,1]
-     * @param turn turn vector [-1,1]
-     * @param speed Master multiplier
-     */
-    public void move(double x, double y, double turn, double speed) {
-        if (northMode) {
-            // Rotate x and y
-            double theta = -Bot.imu.getRadians();
-            double tempX = x * Math.cos(theta) - y * Math.sin(theta);
-            double tempY = x * Math.sin(theta) + y * Math.cos(theta);
-            x = tempX;
-            y = tempY;
+    init {
+        listOf(RF, LF, RB, LB).forEach {
+            it.mode = DcMotor.RunMode.RUN_USING_ENCODER
+            it.mode = DcMotor.RunMode.STOP_AND_RESET_ENCODER
+            it.zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE
         }
-        double denominator = Math.max(Math.abs(y) + Math.abs(x) + Math.abs(turn), 1);
-        double powerRF = (y - x - turn) / denominator;
-        double powerLF = (y + x + turn) / denominator;
-        double powerRB = (y + x - turn) / denominator;
-        double powerLB = (y - x + turn) / denominator;
-
-        RF.setVelocity(powerRF * Config.maxDriveTicksPerSecond * speed + (Math.signum(powerRF) * Config.fRF * Config.maxDriveTicksPerSecond));
-        LF.setVelocity(powerLF * Config.maxDriveTicksPerSecond * speed + (Math.signum(powerLF) * Config.fLF * Config.maxDriveTicksPerSecond));
-        RB.setVelocity(powerRB * Config.maxDriveTicksPerSecond * speed + (Math.signum(powerRB) * Config.fRB * Config.maxDriveTicksPerSecond));
-        LB.setVelocity(powerLB * Config.maxDriveTicksPerSecond * speed + (Math.signum(powerLB) * Config.fLB * Config.maxDriveTicksPerSecond));
     }
 
-    public void stop() {
-        RF.setVelocity(0);
-        LF.setVelocity(0);
-        RB.setVelocity(0);
-        LB.setVelocity(0);
+    fun setZeroPowerBehavior(behavior: DcMotor.ZeroPowerBehavior) {
+        listOf(RF, LF, RB, LB).forEach { it.zeroPowerBehavior = behavior }
     }
 
-    public void setNorthMode(boolean northMode) {
-        this.northMode = northMode;
+    fun move(x: Double, y: Double, turn: Double, speed: Double) {
+        val (newX, newY) = if (northMode) {
+            val theta = -Bot.imu.radians
+            x * cos(theta) - y * sin(theta) to x * sin(theta) + y * cos(theta)
+        } else {
+            x to y
+        }
+
+        val denominator = max(abs(newY) + abs(newX) + abs(turn), 1.0)
+        val powerRF = (newY - newX - turn) / denominator
+        val powerLF = (newY + newX + turn) / denominator
+        val powerRB = (newY + newX - turn) / denominator
+        val powerLB = (newY - newX + turn) / denominator
+
+        RF.velocity = powerRF * Config.maxDriveTicksPerSecond * speed + (sign(powerRF) * Config.fRF * Config.maxDriveTicksPerSecond)
+        LF.velocity = powerLF * Config.maxDriveTicksPerSecond * speed + (sign(powerLF) * Config.fLF * Config.maxDriveTicksPerSecond)
+        RB.velocity = powerRB * Config.maxDriveTicksPerSecond * speed + (sign(powerRB) * Config.fRB * Config.maxDriveTicksPerSecond)
+        LB.velocity = powerLB * Config.maxDriveTicksPerSecond * speed + (sign(powerLB) * Config.fLB * Config.maxDriveTicksPerSecond)
     }
 
-    public double[] getEncoders() {
-        return new double[] {
-                RF.getCurrentPosition(),
-                LF. getCurrentPosition(),
-                RB.getCurrentPosition(),
-                LB.getCurrentPosition()
-        };
+    fun stop() {
+        listOf(RF, LF, RB, LB).forEach { it.velocity = 0.0 }
     }
 
-    public DcMotorEx getLF() {return LF;}
-    public DcMotorEx getLB() {return LB;}
-    public DcMotorEx getRF() {return RF;}
-    public DcMotorEx getRB() {return RB;}
+    fun setNorthMode(northMode: Boolean) {
+        this.northMode = northMode
+    }
+
+    fun getEncoders(): DoubleArray {
+        return doubleArrayOf(
+            RF.currentPosition.toDouble(),
+            LF.currentPosition.toDouble(),
+            RB.currentPosition.toDouble(),
+            LB.currentPosition.toDouble()
+        )
+    }
 }

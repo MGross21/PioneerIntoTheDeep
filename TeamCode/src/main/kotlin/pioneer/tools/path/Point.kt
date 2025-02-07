@@ -1,3 +1,5 @@
+package pioneer.tools.path
+
 import kotlin.math.sqrt
 
 data class Point(
