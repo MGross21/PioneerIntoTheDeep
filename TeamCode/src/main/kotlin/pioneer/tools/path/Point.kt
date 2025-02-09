@@ -1,6 +1,7 @@
 package pioneer.tools.path
 
 import kotlin.math.sqrt
+import pioneer.tools.utils.Angle as Angle
 
 data class Point(
         var x: Double,
@@ -15,18 +16,16 @@ data class Point(
         var name: String = ""
 
 ){
+        // Calculate distance to another point
+        fun distanceTo(other: Point): Double =
+                hypot(other.x - x, other.y - y)
 
-        // Method to calculate the distance to another point
-        fun distanceTo(other: Point): Double {
-                return sqrt((other.x - x) * (other.x - x) + (other.y - y) * (other.y - y))
-        }
+        // Calculate angle to another point
+        fun angleTo(other: Point): Double =
+                atan2(other.y - y, other.x - x)
 
-        // Method to update the position based on velocity and acceleration
-        fun updatePosition(deltaTime: Double) {
-                vx += ax * deltaTime
-                vy += ay * deltaTime
-                x += vx * deltaTime
-                y += vy * deltaTime
-        }
+        // Calculate heading difference (considering wrap-around)
+        fun headingDifference(other: Point): Double =
+                Angle.shortestAngularDistance(heading, other.heading)
 }
 

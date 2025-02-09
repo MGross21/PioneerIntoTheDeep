@@ -3,49 +3,50 @@ package pioneer.tools.utils
 /**
  * A class that toggles a boolean state when a button is pressed.
  */
-class Toggle(private var state: Boolean) {
-    private var prevState: Boolean = false
-    private var justChangedFlag: Boolean = false
+class Toggle(initialState: Boolean = false) {
+    var state: Boolean = initialState
+        private set
+
+    private var prevButtonState: Boolean = false
+    private var justChanged: Boolean = false
 
     /**
      * Toggles the state if the button is pressed.
-     * @param button the button state
+     * @param buttonPressed the current button state
+     * @return the current state after toggling
      */
-    fun toggle(button: Boolean) {
-        justChangedFlag = false
-        if (button && !prevState) {
+    fun update(buttonPressed: Boolean): Boolean {
+        justChanged = false
+        if (buttonPressed && !prevButtonState) {
             state = !state
-            justChangedFlag = true
+            justChanged = true
         }
-        prevState = button
+        prevButtonState = buttonPressed
+        return state
     }
 
     /**
      * Sets the state.
-     * @param bool the new state
+     * @param newState the new state
      */
-    fun set(bool: Boolean) {
-        if (bool != state) {
-            state = bool
-            justChangedFlag = true
-        } else {
-            justChangedFlag = false
-        }
-    }
-
-    /**
-     * Gets the current state.
-     * @return the current state
-     */
-    fun get(): Boolean {
-        return state
+    fun setState(newState: Boolean) {
+        justChanged = newState != state
+        state = newState
     }
 
     /**
      * Checks if the state just changed.
      * @return true if the state just changed, false otherwise
      */
-    fun justChanged(): Boolean {
-        return justChangedFlag
+    fun justChanged(): Boolean = justChanged
+
+    /**
+     * Resets the toggle to its initial state.
+     * @param resetState the state to reset to (default is false)
+     */
+    fun reset(resetState: Boolean = false) {
+        state = resetState
+        prevButtonState = false
+        justChanged = false
     }
 }
