@@ -43,4 +43,5 @@ dependencies {
     implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.21") // Kotlin Standard Library
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3") // Coroutines Core
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3") // Coroutines for Android
+    implementation("org.apache.commons:commons-math3:3.6.1") // Apache Commons Math
 }
