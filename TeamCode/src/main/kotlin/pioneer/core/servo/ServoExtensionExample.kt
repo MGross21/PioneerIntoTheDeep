@@ -11,7 +11,14 @@ class ServoExtensionExample(minPos: Double, maxPos: Double, hardwareMap: Hardwar
     }
 
     // Override setPosition to use custom states for position-controlled servos
-    override fun setPosition(state: State) {
-        super.setPosition(state.position)
+    /**
+     * Set the position of the servo based on a custom state.
+     * @param state The custom state to set the servo to
+     * Example usage:
+     * ```
+     * servo.setState(OPEN)
+     */
+    override fun setState(state: State) {
+        super.setState(state.position)
     }
 }

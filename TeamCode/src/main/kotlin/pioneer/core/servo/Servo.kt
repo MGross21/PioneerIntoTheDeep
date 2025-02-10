@@ -46,6 +46,10 @@ open class Servo(
         get() = _position
 
     // Method to set the position or speed of the servo
+    open fun setState(state: State) {
+        setPosition(state.position)
+    }
+
     open fun setPosition(pos: Double) {
         when (mode) {
             Mode.SERVO -> {
@@ -78,10 +82,5 @@ open class Servo(
         if (mode == Mode.SERVO) {
             setPosition(minPos)
         }
-    }
-
-    // Set the servo to a custom position (for SERVO mode) or set speed (for CONTINUOUS mode)
-    fun setCustomPosition(pos: Double) {
-        setPosition(pos)
     }
 }
